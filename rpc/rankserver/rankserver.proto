@@ -1,19 +1,75 @@
 syntax = "proto3";
-package protoc;
-option go_package = "github.com/liuwangchen/apis/pb";
+package rankserver;
+option go_package = "github.com/liuwangchen/apis/apipb";
 import "google/protobuf/empty.proto";
 import "third_party/rpc/annotation.proto";
 import "google/protobuf/any.proto";
+import "ret.proto";
 
-message ReqEcho {
-
+// 排行榜返回item
+message RankItem {
+  string id = 1; // 各种id：玩家id，联盟id，服务器id等等
+  int64 score = 2; // 积分
+  uint32 rank = 3;
+  int64 then = 4; // 二级排序值
 }
 
-message RespEcho {
+// 请求排行榜
+message ReqGetRank {
+  int32 rankType = 1; // 请求的排行榜类型
+  uint32 beginRank = 2; // 排行榜初始名次
+  uint32 count = 3; // 数量
+  string me = 4;
+  bool reverse = 5; // 是否反转
+}
 
+// 请求排行榜，请求me前后offset名次的数据
+message ReqGetRankByOffset {
+  int32 rankType = 1; // 请求的排行榜类型
+  string me = 2;
+  int32 offset = 3; // 偏移
+  bool reverse = 4; // 是否反转
+}
+
+message RspGetRank {
+  ret.RET code = 1;
+  repeated RankItem ranks = 2;
+  RankItem me = 3; // meUid>0时候返回
+  RankItem top = 4; // withTop1=true时候返回
+  uint32 totalRankNum = 5; // 总上榜人数
+}
+
+message RankChangeData {
+  int64 score = 1;
+  int64 then = 2;
+}
+
+// 更新排行榜，替换形式
+message ReqUpdateRank {
+  int32 rankType = 1; // 排行榜类型
+  map<string, RankChangeData> rankData = 2; // 更新的数据，id -> score，增量的
+}
+
+message ReqDeleteRankMems {
+  int32 rankType = 1; // 排行榜类型
+  repeated string mems = 2; // 要删除的成员
+}
+
+message CommonRsp {
+  ret.RET code = 1;
 }
 
 service RankServer {
-  // echo
-  rpc Echo (ReqEcho) returns (RespEcho) {}
+  option (rpc.serviceAsync) = true;
+  // 获取排行榜
+  rpc GetRank (ReqGetRank) returns (RspGetRank) {}
+
+  // 获取me前后offset名次排行榜
+  rpc GetRankByOffset (ReqGetRankByOffset) returns (RspGetRank) {}
+
+  // 更新排行榜
+  rpc UpdateRank (ReqUpdateRank) returns (CommonRsp) {}
+
+  // 删除排行榜成员
+  rpc DeleteRankMems (ReqDeleteRankMems) returns (CommonRsp) {}
 }

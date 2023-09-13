@@ -1,0 +1,15 @@
+syntax = "proto3";
+package ret;
+option go_package = "github.com/liuwangchen/apis/apipb";
+import "google/protobuf/empty.proto";
+import "third_party/rpc/annotation.proto";
+import "google/protobuf/any.proto";
+
+enum RET {
+  //基本错误类型
+  OK = 0; //ok
+  ERROR = 1; //错误
+  RankTypeErr = 3; // 排行榜类型错误
+  RankBeginInputErr = 4; // 初始排行输入错误
+}
+
