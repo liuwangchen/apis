@@ -1,0 +1,19 @@
+syntax = "proto3";
+package protoc;
+option go_package = "github.com/liuwangchen/apis/pb";
+import "google/protobuf/empty.proto";
+import "third_party/rpc/annotation.proto";
+import "google/protobuf/any.proto";
+
+message ReqEcho {
+
+}
+
+message RespEcho {
+
+}
+
+service RankServer {
+  // echo
+  rpc Echo (ReqEcho) returns (RespEcho) {}
+}
