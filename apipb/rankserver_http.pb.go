@@ -25,6 +25,7 @@ var _ = middleware.Chain()
 var _ = new(async.Async)
 
 type RankServerHTTPServer interface {
+	DeleteRank(ctx context.Context, req *ReqDeleteRankMems) (*CommonRsp, error)
 	DeleteRankMems(ctx context.Context, req *ReqDeleteRankMems) (*CommonRsp, error)
 	GetRank(ctx context.Context, req *ReqGetRank) (*RspGetRank, error)
 	GetRankByOffset(ctx context.Context, req *ReqGetRankByOffset) (*RspGetRank, error)
@@ -81,6 +82,17 @@ func (s *RankServerHttpServiceWrapper) DeleteRankMems(ctx context.Context, req *
 	return temp.(*CommonRsp), err
 }
 
+// DeleteRank DO NOT USE
+func (s *RankServerHttpServiceWrapper) DeleteRank(ctx context.Context, req *ReqDeleteRankMems) (*CommonRsp, error) {
+	temp, err := s.doer.Do(ctx, func() (interface{}, error) {
+		return s.s.DeleteRank(ctx, req)
+	})
+	if temp == nil {
+		return nil, err
+	}
+	return temp.(*CommonRsp), err
+}
+
 func RegisterAsyncRankServerHTTPServer(conn *httprpc.ServerConn, doer async.IAsync, srv RankServerHTTPServer, opts ...httprpc.ServiceOption) {
 	r := conn.Route("/")
 	opt := new(httprpc.ServiceOpt)
@@ -95,6 +107,7 @@ func RegisterAsyncRankServerHTTPServer(conn *httprpc.ServerConn, doer async.IAsy
 	r.POST("/rankserver.RankServer/GetRankByOffset", _RankServer_GetRankByOffset0_HTTP_Handler(ss, opt))
 	r.POST("/rankserver.RankServer/UpdateRank", _RankServer_UpdateRank0_HTTP_Handler(ss, opt))
 	r.POST("/rankserver.RankServer/DeleteRankMems", _RankServer_DeleteRankMems0_HTTP_Handler(ss, opt))
+	r.POST("/rankserver.RankServer/DeleteRank", _RankServer_DeleteRank0_HTTP_Handler(ss, opt))
 }
 
 func _RankServer_GetRank0_HTTP_Handler(srv *RankServerHttpServiceWrapper, opt *httprpc.ServiceOpt) func(ctx httprpc.Context) error {
@@ -173,7 +186,27 @@ func _RankServer_DeleteRankMems0_HTTP_Handler(srv *RankServerHttpServiceWrapper,
 	}
 }
 
+func _RankServer_DeleteRank0_HTTP_Handler(srv *RankServerHttpServiceWrapper, opt *httprpc.ServiceOpt) func(ctx httprpc.Context) error {
+	return func(ctx httprpc.Context) error {
+		var in ReqDeleteRankMems
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		httprpc.SetOperation(ctx, "/rankserver.RankServer/DeleteRank")
+		h := ctx.Middleware(middleware.Chain(opt.Mw...)(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.DeleteRank(ctx, req.(*ReqDeleteRankMems))
+		}))
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*CommonRsp)
+		return ctx.Result(200, reply)
+	}
+}
+
 type RankServerHTTPClient interface {
+	DeleteRank(ctx context.Context, req *ReqDeleteRankMems, opts ...httprpc.CallOption) (rsp *CommonRsp, err error)
 	DeleteRankMems(ctx context.Context, req *ReqDeleteRankMems, opts ...httprpc.CallOption) (rsp *CommonRsp, err error)
 	GetRank(ctx context.Context, req *ReqGetRank, opts ...httprpc.CallOption) (rsp *RspGetRank, err error)
 	GetRankByOffset(ctx context.Context, req *ReqGetRankByOffset, opts ...httprpc.CallOption) (rsp *RspGetRank, err error)
@@ -186,6 +219,19 @@ type RankServerHTTPClientImpl struct {
 
 func NewRankServerHTTPClient(conn *httprpc.ClientConn) RankServerHTTPClient {
 	return &RankServerHTTPClientImpl{conn}
+}
+
+func (c *RankServerHTTPClientImpl) DeleteRank(ctx context.Context, in *ReqDeleteRankMems, opts ...httprpc.CallOption) (*CommonRsp, error) {
+	var out CommonRsp
+	pattern := "/rankserver.RankServer/DeleteRank"
+	path := binding.EncodeURL(pattern, in, false)
+	opts = append(opts, httprpc.Operation("/rankserver.RankServer/DeleteRank"))
+	opts = append(opts, httprpc.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, err
 }
 
 func (c *RankServerHTTPClientImpl) DeleteRankMems(ctx context.Context, in *ReqDeleteRankMems, opts ...httprpc.CallOption) (*CommonRsp, error) {

@@ -55,6 +55,10 @@ message ReqDeleteRankMems {
   repeated string mems = 2; // 要删除的成员
 }
 
+message ReqDeleteRank {
+  int32 rankType = 1; // 排行榜类型
+}
+
 message CommonRsp {
   ret.RET code = 1;
 }
@@ -72,4 +76,7 @@ service RankServer {
 
   // 删除排行榜成员
   rpc DeleteRankMems (ReqDeleteRankMems) returns (CommonRsp) {}
+
+  // 删除排行榜
+  rpc DeleteRank (ReqDeleteRankMems) returns (CommonRsp) {}
 }

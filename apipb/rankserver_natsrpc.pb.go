@@ -37,6 +37,8 @@ type RankServerNatsService interface {
 	UpdateRank(ctx context.Context, req *ReqUpdateRank) (*CommonRsp, error)
 	// DeleteRankMems call
 	DeleteRankMems(ctx context.Context, req *ReqDeleteRankMems) (*CommonRsp, error)
+	// DeleteRank call
+	DeleteRank(ctx context.Context, req *ReqDeleteRankMems) (*CommonRsp, error)
 }
 
 func RegisterAsyncRankServerNatsServer(conn *natsrpc.ServerConn, as async.IAsync, s RankServerNatsService, opts ...natsrpc.ServiceOption) error {
@@ -97,6 +99,17 @@ func (s *RankServerNatsServiceWrapper) DeleteRankMems(ctx context.Context, req *
 	return temp.(*CommonRsp), err
 }
 
+// DeleteRank DO NOT USE
+func (s *RankServerNatsServiceWrapper) DeleteRank(ctx context.Context, req *ReqDeleteRankMems) (*CommonRsp, error) {
+	temp, err := s.as.Do(ctx, func() (interface{}, error) {
+		return s.s.DeleteRank(ctx, req)
+	})
+	if temp == nil {
+		return nil, err
+	}
+	return temp.(*CommonRsp), err
+}
+
 // RankServerNatsClient
 type RankServerNatsClient interface {
 	// GetRank
@@ -107,6 +120,8 @@ type RankServerNatsClient interface {
 	UpdateRank(ctx context.Context, req *ReqUpdateRank) (*CommonRsp, error)
 	// DeleteRankMems
 	DeleteRankMems(ctx context.Context, req *ReqDeleteRankMems) (*CommonRsp, error)
+	// DeleteRank
+	DeleteRank(ctx context.Context, req *ReqDeleteRankMems) (*CommonRsp, error)
 }
 
 type _RankServerNatsClient struct {
@@ -140,6 +155,11 @@ func (c *_RankServerNatsClient) DeleteRankMems(ctx context.Context, req *ReqDele
 	err := c.c.Request(ctx, "github.com.liuwangchen.apis.apipb.RankServer", "DeleteRankMems", req, rep)
 	return rep, err
 }
+func (c *_RankServerNatsClient) DeleteRank(ctx context.Context, req *ReqDeleteRankMems) (*CommonRsp, error) {
+	rep := &CommonRsp{}
+	err := c.c.Request(ctx, "github.com.liuwangchen.apis.apipb.RankServer", "DeleteRank", req, rep)
+	return rep, err
+}
 
 // Async
 // RankServerAsyncNatsClient
@@ -152,6 +172,8 @@ type RankServerAsyncNatsClient interface {
 	UpdateRank(ctx context.Context, req *ReqUpdateRank, cb func(*CommonRsp, error))
 	// DeleteRankMems
 	DeleteRankMems(ctx context.Context, req *ReqDeleteRankMems, cb func(*CommonRsp, error))
+	// DeleteRank
+	DeleteRank(ctx context.Context, req *ReqDeleteRankMems, cb func(*CommonRsp, error))
 	SyncClient() RankServerNatsClient
 }
 
@@ -203,6 +225,15 @@ func (c *_RankServerAsyncNatsClient) DeleteRankMems(ctx context.Context, req *Re
 	reqClone := proto.Clone(req)
 	go func() {
 		rep, err := c.c.DeleteRankMems(ctx, reqClone.(*ReqDeleteRankMems))
+		c.as.DoWithNoRet(ctx, func() {
+			cb(rep, err)
+		})
+	}()
+}
+func (c *_RankServerAsyncNatsClient) DeleteRank(ctx context.Context, req *ReqDeleteRankMems, cb func(*CommonRsp, error)) {
+	reqClone := proto.Clone(req)
+	go func() {
+		rep, err := c.c.DeleteRank(ctx, reqClone.(*ReqDeleteRankMems))
 		c.as.DoWithNoRet(ctx, func() {
 			cb(rep, err)
 		})
